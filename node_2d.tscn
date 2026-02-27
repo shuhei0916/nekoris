@@ -1,0 +1,6 @@
+[gd_scene format=3 uid="uid://c2smdsb4jpba"]
+
+[ext_resource type="Script" uid="uid://b3og6knrbabol" path="res://hoge.gd" id="1_wtcfe"]
+
+[node name="Node2D" type="Node2D" unique_id=829561947]
+script = ExtResource("1_wtcfe")
