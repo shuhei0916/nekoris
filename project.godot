@@ -13,12 +13,21 @@ config_version=5
 config/name="nekoris"
 config/features=PackedStringArray("4.7", "Forward Plus")
 config/icon="res://icon.svg"
+run/main_scene="res://src/game/demo.tscn"
+
+[display]
+
+window/size/viewport_width=600
+window/size/viewport_height=900
 
 [editor_plugins]
 
 enabled=PackedStringArray("res://addons/gut/plugin.cfg")
 
 [physics]
+
+common/physics_ticks_per_second=120
+2d/default_linear_damp=0.2
 
 3d/physics_engine="Jolt Physics"
 
