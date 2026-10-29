@@ -4,6 +4,8 @@ extends Node2D
 
 const BlobForces = preload("res://src/physics/blob_forces.gd")
 
+## 猫の段階（tier 0 が数字 2）。
+var tier := 0
 ## 見た目の半径（玉の外側の縁まで）。
 @export var radius := 40.0
 @export var bead_radius := 10.0
@@ -18,11 +20,15 @@ const BlobForces = preload("res://src/physics/blob_forces.gd")
 @export var core_stiffness := 180.0
 @export var core_damping := 12.0
 @export var color := Color(1.0, 0.8, 0.55)
+## 出現時の大きさの倍率。1未満なら grow_time かけて元の大きさまで膨らむ。
+@export var start_scale := 1.0
+@export var grow_time := 0.25
 
 var _beads: Array[RigidBody2D] = []
 var _core: RigidBody2D
 var _rest_length := 0.0
 var _target_area := 0.0
+var _growth := 1.0
 
 
 func _ready() -> void:
@@ -32,15 +38,18 @@ func _ready() -> void:
 	var material := PhysicsMaterial.new()
 	material.friction = 0.0
 	material.bounce = 0.0
+	_growth = start_scale
 	var points := PackedVector2Array()
 	for i in count:
 		var p := Vector2.from_angle(TAU * i / count) * ring_radius
 		points.append(p)
-		_beads.append(_create_bead(p, material))
+		_beads.append(_create_bead(p * _growth, material))
 	_target_area = BlobForces.polygon_area(points)
-	# 隣どうしは重なっているので、衝突させない
-	for i in count:
-		_beads[i].add_collision_exception_with(_beads[(i + 1) % count])
+	# 同じ猫の玉どうしは重なり合うことがあるので、衝突させない
+	for a in _beads:
+		for b in _beads:
+			if a != b:
+				a.add_collision_exception_with(b)
 	var total_mass := PI * radius * radius / area_per_mass
 	_core = _create_core(maxf(total_mass - count * bead_mass, bead_mass))
 
@@ -51,6 +60,22 @@ func get_beads() -> Array[RigidBody2D]:
 
 func get_core() -> RigidBody2D:
 	return _core
+
+
+## 今の速度に velocity を加える。
+func launch(velocity: Vector2) -> void:
+	_core.linear_velocity += velocity
+	for bead in _beads:
+		bead.linear_velocity += velocity
+
+
+func get_growth() -> float:
+	return _growth
+
+
+## delta 秒ぶん、元の大きさに向かって膨らむ。
+func grow(delta: float) -> void:
+	_growth = move_toward(_growth, 1.0, (1.0 - start_scale) * delta / grow_time)
 
 
 func get_total_mass() -> float:
@@ -69,7 +94,8 @@ func get_area_ratio() -> float:
 	return BlobForces.polygon_area(get_outline()) / _target_area
 
 
-func _physics_process(_delta: float) -> void:
+func _physics_process(delta: float) -> void:
+	grow(delta)
 	var points := get_outline()
 	var velocities := PackedVector2Array()
 	var ring_center := Vector2.ZERO
@@ -82,10 +108,10 @@ func _physics_process(_delta: float) -> void:
 	ring_velocity /= _beads.size()
 
 	var skin := BlobForces.skin_forces(
-		points, velocities, _rest_length, skin_stiffness, skin_damping
+		points, velocities, _rest_length * _growth, skin_stiffness, skin_damping
 	)
 	var pressure := BlobForces.pressure_forces(
-		points, _target_area, pressure_strength, pressure_max
+		points, _target_area * _growth * _growth, pressure_strength, pressure_max
 	)
 	var core := BlobForces.core_force(
 		ring_center, ring_velocity, _core.global_position, _core.linear_velocity,

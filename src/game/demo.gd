@@ -1,17 +1,18 @@
 ## ふにゃふにゃ感を確かめるためのデモ。クリックした位置の上から猫を落とす。
 extends Node2D
 
-const Blob = preload("res://src/blob/blob.gd")
+const CatField = preload("res://src/game/cat_field.gd")
+const CatRules = preload("res://src/rules/cat_rules.gd")
 
 const CONTAINER := Rect2(100, 200, 400, 650)
 const WALL := 20.0
-const COLORS := [
-	Color(1.0, 0.8, 0.55), Color(0.95, 0.95, 0.95), Color(0.55, 0.55, 0.6),
-	Color(0.35, 0.3, 0.3), Color(0.95, 0.65, 0.4),
-]
+var field: Node2D
+var _rng := RandomNumberGenerator.new()
 
 
 func _ready() -> void:
+	field = CatField.new()
+	add_child(field)
 	var left := CONTAINER.position.x
 	var right := CONTAINER.end.x
 	var bottom := CONTAINER.end.y
@@ -24,16 +25,7 @@ func _ready() -> void:
 func _unhandled_input(event: InputEvent) -> void:
 	if event is InputEventMouseButton and event.pressed and event.button_index == MOUSE_BUTTON_LEFT:
 		var x := clampf(event.position.x, CONTAINER.position.x + 70, CONTAINER.end.x - 70)
-		spawn_blob(Vector2(x, CONTAINER.position.y - 60), randf_range(30, 70))
-
-
-func spawn_blob(at: Vector2, blob_radius: float) -> Node2D:
-	var blob: Node2D = Blob.new()
-	blob.position = at
-	blob.radius = blob_radius
-	blob.color = COLORS.pick_random()
-	add_child(blob)
-	return blob
+		field.spawn_cat(CatRules.next_spawn_tier(_rng), Vector2(x, CONTAINER.position.y - 60))
 
 
 func _add_wall(rect: Rect2) -> void:

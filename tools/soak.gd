@@ -3,28 +3,33 @@
 extends SceneTree
 
 const Demo = preload("res://src/game/demo.gd")
+const CatRules = preload("res://src/rules/cat_rules.gd")
 
 var _demo: Node2D
 var _blobs: Array = []
 var _frame := 0
+var _spawned := 0
+var _rng := RandomNumberGenerator.new()
 
 
 func _initialize() -> void:
-	seed(1)
+	_rng.seed = 1
 	_demo = Demo.new()
 	root.add_child(_demo)
 
 
 func _physics_process(_delta: float) -> bool:
 	_frame += 1
-	if _frame % 60 == 0 and _blobs.size() < 14:
-		var at := Vector2(200 + (_blobs.size() % 5) * 50, 100)
-		var blob_radius := randf_range(30, 70)
-		if _is_clear(at, blob_radius):
-			_blobs.append(_demo.spawn_blob(at, blob_radius))
+	_blobs = _demo.field.get_cats()
+	if _frame % 60 == 0 and _spawned < 40:
+		var at := Vector2(200 + (_spawned % 5) * 50, 100)
+		var tier := CatRules.next_spawn_tier(_rng)
+		if _is_clear(at, CatRules.radius_of(tier)):
+			_demo.field.spawn_cat(tier, at)
+			_spawned += 1
 	if _frame % 240 == 0:
 		_report()
-	if _frame >= 3600:
+	if _frame >= 6000:
 		quit()
 	return false
 
@@ -54,4 +59,9 @@ func _report() -> void:
 				for p in other.get_outline():
 					if Geometry2D.is_point_in_polygon(p, blob.get_outline()):
 						intruders += 1
+	var tiers := []
+	for blob in _blobs:
+		tiers.append(blob.tier)
+	tiers.sort()
+	print("score=%d tiers=%s" % [_demo.field.score.total, tiers])
 	print("frame=%d blobs=%d area_ratio=[%.2f, %.2f] escaped_beads=%d intruders=%d" % [_frame, _blobs.size(), min_ratio, max_ratio, escaped, intruders])
