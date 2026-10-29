@@ -23,6 +23,7 @@ func spawn_cat(tier: int, at: Vector2, start_scale := 1.0) -> Node2D:
 	cat.start_scale = start_scale
 	cat.radius = CatRules.radius_of(tier)
 	cat.color = CatRules.color_of(tier)
+	cat.label = str(CatRules.value_of(tier))
 	cat.position = at
 	add_child(cat)
 	_cats.append(cat)

@@ -42,9 +42,9 @@ func _add_wall(rect: Rect2) -> void:
 
 
 func _draw() -> void:
-	draw_rect(Rect2(Vector2.ZERO, get_viewport_rect().size), Color(0.2, 0.22, 0.3))
-	draw_rect(CONTAINER, Color(0.28, 0.3, 0.4))
-	var wall_color := Color(0.6, 0.45, 0.35)
+	draw_rect(Rect2(Vector2.ZERO, get_viewport_rect().size), Color(0.11, 0.11, 0.12))
+	draw_rect(CONTAINER, Color.BLACK)
+	var wall_color := Color(0.24, 0.24, 0.26)
 	draw_rect(Rect2(CONTAINER.position.x - WALL, CONTAINER.position.y, WALL, CONTAINER.size.y + WALL), wall_color)
 	draw_rect(Rect2(CONTAINER.end.x, CONTAINER.position.y, WALL, CONTAINER.size.y + WALL), wall_color)
 	draw_rect(Rect2(CONTAINER.position.x, CONTAINER.end.y, CONTAINER.size.x, WALL), wall_color)

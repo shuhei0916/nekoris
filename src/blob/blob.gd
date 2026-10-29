@@ -3,9 +3,15 @@
 extends Node2D
 
 const BlobForces = preload("res://src/physics/blob_forces.gd")
+const BlobShape = preload("res://src/blob/blob_shape.gd")
+
+const LINE_COLOR := Color(0.05, 0.05, 0.08)
+const LINE_WIDTH := 3.0
 
 ## 猫の段階（tier 0 が数字 2）。
 var tier := 0
+## 体の中央に表示する文字（数字）。
+var label := ""
 ## 見た目の半径（玉の外側の縁まで）。
 @export var radius := 40.0
 @export var bead_radius := 10.0
@@ -15,7 +21,7 @@ var tier := 0
 @export var area_per_mass := 300.0
 @export var skin_stiffness := 2000.0
 @export var skin_damping := 8.0
-@export var pressure_strength := 15.0
+@export var pressure_strength := 40.0
 @export var pressure_max := 30000.0
 @export var core_stiffness := 180.0
 @export var core_damping := 12.0
@@ -131,23 +137,44 @@ func _draw() -> void:
 	for p in outline:
 		center += p
 	center /= outline.size()
-	# 玉の外側の縁まで膨らませて描く
-	var body := PackedVector2Array()
+	# 玉の外側の縁まで膨らませる
+	var edge := PackedVector2Array()
 	for p in outline:
-		body.append(to_local(p + (p - center).normalized() * bead_radius))
+		edge.append(to_local(p + (p - center).normalized() * bead_radius))
+	var local_center := to_local(center)
+	var body := BlobShape.smooth(BlobShape.smooth(edge))
 	if Geometry2D.triangulate_polygon(body).is_empty():
 		return  # 輪がねじれた瞬間は描かない
+	var ears := BlobShape.ear_indices(edge, local_center)
+	_draw_ear(edge[ears.x], local_center)
+	_draw_ear(edge[ears.y], local_center)
 	draw_colored_polygon(body, color)
+	body.append(body[0])
+	draw_polyline(body, LINE_COLOR, LINE_WIDTH, true)
 	_draw_face(to_local(_core.global_position))
 
 
+func _draw_ear(base: Vector2, center: Vector2) -> void:
+	var outward := (base - center).normalized()
+	var side := outward.orthogonal() * radius * 0.28
+	var root := base - outward * radius * 0.15
+	var ear := PackedVector2Array([root - side, base + outward * radius * 0.3, root + side])
+	draw_colored_polygon(ear, color)
+	ear.append(ear[0])
+	draw_polyline(ear, LINE_COLOR, LINE_WIDTH, true)
+
+
 func _draw_face(center: Vector2) -> void:
-	var eye := radius * 0.12
-	draw_circle(center + Vector2(-radius * 0.3, -radius * 0.1), eye, Color.BLACK)
-	draw_circle(center + Vector2(radius * 0.3, -radius * 0.1), eye, Color.BLACK)
-	var mouth := center + Vector2(0, radius * 0.15)
-	draw_arc(mouth + Vector2(-eye, 0), eye, 0, PI, 8, Color.BLACK, 2.0)
-	draw_arc(mouth + Vector2(eye, 0), eye, 0, PI, 8, Color.BLACK, 2.0)
+	var eye := maxf(radius * 0.06, 2.0)
+	draw_circle(center + Vector2(-radius * 0.28, -radius * 0.38), eye, LINE_COLOR)
+	draw_circle(center + Vector2(radius * 0.28, -radius * 0.38), eye, LINE_COLOR)
+	if label.is_empty():
+		return
+	var font := ThemeDB.fallback_font
+	var font_size := maxi(int(radius * 0.6), 12)
+	var size := font.get_string_size(label, HORIZONTAL_ALIGNMENT_LEFT, -1, font_size)
+	var baseline := center + Vector2(-size.x / 2.0, font.get_ascent(font_size) / 2.0 - radius * 0.02)
+	draw_string(font, baseline, label, HORIZONTAL_ALIGNMENT_LEFT, -1, font_size, LINE_COLOR)
 
 
 func _create_bead(local_position: Vector2, material: PhysicsMaterial) -> RigidBody2D:
