@@ -1,13 +1,21 @@
-## ふにゃふにゃ感を確かめるためのデモ。クリックした位置の上から猫を落とす。
+## ふにゃふにゃ感を確かめるためのデモ。マウスで狙い、クリックで猫を落とす。
 extends Node2D
 
 const CatField = preload("res://src/game/cat_field.gd")
 const CatRules = preload("res://src/rules/cat_rules.gd")
+const SpawnQueue = preload("res://src/rules/spawn_queue.gd")
 
 const CONTAINER := Rect2(100, 200, 400, 650)
 const WALL := 20.0
+## 落とす前の猫を構える高さ。
+const DROP_Y := CONTAINER.position.y - 60.0
+
 var field: Node2D
-var _rng := RandomNumberGenerator.new()
+var queue := SpawnQueue.new(RandomNumberGenerator.new())
+## 今の猫を落とす横の位置。
+var aim_x := CONTAINER.get_center().x
+## 最後に狙った横の位置（壁で制限する前）。猫が入れ替わったら狙い直すのに使う。
+var _wanted_x := aim_x
 
 
 func _ready() -> void:
@@ -23,9 +31,25 @@ func _ready() -> void:
 
 
 func _unhandled_input(event: InputEvent) -> void:
-	if event is InputEventMouseButton and event.pressed and event.button_index == MOUSE_BUTTON_LEFT:
-		var x := clampf(event.position.x, CONTAINER.position.x + 70, CONTAINER.end.x - 70)
-		field.spawn_cat(CatRules.next_spawn_tier(_rng), Vector2(x, CONTAINER.position.y - 60))
+	if event is InputEventMouseMotion:
+		aim(event.position.x)
+	elif event is InputEventMouseButton and event.pressed and event.button_index == MOUSE_BUTTON_LEFT:
+		aim(event.position.x)
+		drop()
+
+
+## 横の位置 x を狙う。今の猫が容器の壁からはみ出さない範囲に限る。
+func aim(x: float) -> void:
+	_wanted_x = x
+	var radius := CatRules.radius_of(queue.current)
+	aim_x = clampf(x, CONTAINER.position.x + radius, CONTAINER.end.x - radius)
+	queue_redraw()
+
+
+## 今の猫を狙った位置から落とし、次の猫を構える。
+func drop() -> void:
+	field.spawn_cat(queue.take(), Vector2(aim_x, DROP_Y))
+	aim(_wanted_x)
 
 
 func _add_wall(rect: Rect2) -> void:

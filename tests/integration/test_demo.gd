@@ -1,0 +1,46 @@
+extends GutTest
+
+const CatRules = preload("res://src/rules/cat_rules.gd")
+const Demo = preload("res://src/game/demo.gd")
+
+var _demo: Node2D
+
+
+func before_each() -> void:
+	_demo = Demo.new()
+	add_child_autofree(_demo)
+
+
+func _current_radius() -> float:
+	return CatRules.radius_of(_demo.queue.current)
+
+
+func test_狙う位置は容器の左の壁からはみ出さない():
+	_demo.aim(0.0)
+	assert_almost_eq(_demo.aim_x, Demo.CONTAINER.position.x + _current_radius(), 0.001)
+
+
+func test_狙う位置は容器の右の壁からはみ出さない():
+	_demo.aim(10000.0)
+	assert_almost_eq(_demo.aim_x, Demo.CONTAINER.end.x - _current_radius(), 0.001)
+
+
+func test_容器の内側ならマウスの位置をそのまま狙う():
+	_demo.aim(300.0)
+	assert_eq(_demo.aim_x, 300.0)
+
+
+func test_落とすと今の猫が狙った位置の上から場に出る():
+	var tier: int = _demo.queue.current
+	_demo.aim(250.0)
+	_demo.drop()
+	var cats: Array = _demo.field.get_cats()
+	assert_eq(cats.size(), 1)
+	assert_eq(cats[0].tier, tier)
+	assert_eq(cats[0].position, Vector2(250.0, Demo.DROP_Y))
+
+
+func test_落とすと次の猫が今の猫になる():
+	var next: int = _demo.queue.next
+	_demo.drop()
+	assert_eq(_demo.queue.current, next)
