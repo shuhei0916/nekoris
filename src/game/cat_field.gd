@@ -1,20 +1,24 @@
-## 容器の中の猫たちを管理し、同じ段階の猫が触れたら合体させる。
+## 容器の中の猫たちを管理し、同じ段階の猫がしばらく触れ続けたら合体させる。
 extends Node2D
 
 const Blob = preload("res://src/blob/blob.gd")
 const BlobContact = preload("res://src/physics/blob_contact.gd")
 const CatRules = preload("res://src/rules/cat_rules.gd")
+const ContactTimer = preload("res://src/physics/contact_timer.gd")
 const ScoreBoard = preload("res://src/rules/score_board.gd")
 
 ## 玉どうしがこの距離だけ離れていても「触れている」とみなす余裕。
 const CONTACT_MARGIN := 2.0
 ## 合体した猫は小さく出して膨らませ、周りの猫や壁に食い込まないようにする。
 const MERGE_START_SCALE := 0.5
+## 同じ段階の猫がこの秒数だけ触れ続けたら合体する。触れた瞬間ではなく、少し遅れて気付く感じにする。
+const MERGE_DELAY := 0.5
 
 signal merged(tier: int, at: Vector2)
 
 var score := ScoreBoard.new()
 var _cats: Array[Node2D] = []
+var _contacts := ContactTimer.new()
 
 
 func spawn_cat(tier: int, at: Vector2, start_scale := 1.0) -> Node2D:
@@ -34,14 +38,19 @@ func get_cats() -> Array[Node2D]:
 	return _cats
 
 
-func _physics_process(_delta: float) -> void:
+func _physics_process(delta: float) -> void:
+	var pairs := _find_mergeable_touching_pairs()
+	_contacts.update(pairs.keys(), delta)
 	# 1フレームに合体は1組だけ
-	var pair := _find_merge_pair()
-	if not pair.is_empty():
-		_merge(pair[0], pair[1])
+	for key in pairs:
+		if _contacts.elapsed(key) >= MERGE_DELAY:
+			_merge(pairs[key][0], pairs[key][1])
+			return
 
 
-func _find_merge_pair() -> Array:
+## 合体できる段階どうしで触れている組。組を表す文字列から2匹への辞書。
+func _find_mergeable_touching_pairs() -> Dictionary:
+	var pairs := {}
 	for i in _cats.size():
 		for j in range(i + 1, _cats.size()):
 			var a := _cats[i]
@@ -50,8 +59,8 @@ func _find_merge_pair() -> Array:
 				continue
 			var reach: float = a.bead_radius + b.bead_radius + CONTACT_MARGIN
 			if BlobContact.are_touching(a.get_outline(), b.get_outline(), reach):
-				return [a, b]
-	return []
+				pairs["%d-%d" % [a.get_instance_id(), b.get_instance_id()]] = [a, b]
+	return pairs
 
 
 func _merge(a: Node2D, b: Node2D) -> void:
