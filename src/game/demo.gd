@@ -4,6 +4,7 @@ extends Node2D
 const CatField = preload("res://src/game/cat_field.gd")
 const CatPainter = preload("res://src/blob/cat_painter.gd")
 const CatRules = preload("res://src/rules/cat_rules.gd")
+const PauseMenu = preload("res://src/ui/pause_menu.gd")
 const SpawnQueue = preload("res://src/rules/spawn_queue.gd")
 
 const CONTAINER := Rect2(100, 200, 400, 650)
@@ -20,8 +21,13 @@ const BOX_RADIUS := 46.0
 const NEXT_PREVIEW_MAX_RADIUS := 28.0
 ## 表示だけの猫の輪郭の点の数。
 const PREVIEW_EDGE_POINTS := 12
-const TEXT_COLOR := Color(0.85, 0.85, 0.88)
-const FRAME_COLOR := Color(0.24, 0.24, 0.26)
+## 配色。オレンジがかった背景に、クリーム色の容器を置く。
+const BACKGROUND_COLOR := Color("d49a58")
+const CONTAINER_COLOR := Color("ffe7b5")
+const WALL_COLOR := Color("f2cf7c")
+const BOX_COLOR := Color("fbe9c9")
+const BOX_RIM_COLOR := Color("fff8ec")
+const TEXT_COLOR := Color("6b4220")
 
 var field: Node2D
 var queue := SpawnQueue.new(RandomNumberGenerator.new())
@@ -31,6 +37,8 @@ var aim_x := CONTAINER.get_center().x
 var _wanted_x := aim_x
 ## 次の猫を構えるまでの残り秒数。
 var _cooldown := 0.0
+## Esc で開くポーズメニュー。
+var pause_menu: CanvasLayer
 
 
 func _ready() -> void:
@@ -44,6 +52,14 @@ func _ready() -> void:
 	_add_wall(Rect2(right, CONTAINER.position.y, WALL, height + WALL))
 	_add_wall(Rect2(left, bottom, CONTAINER.size.x, WALL))
 	field.merged.connect(func(_tier: int, _at: Vector2) -> void: queue_redraw())
+	pause_menu = PauseMenu.new()
+	pause_menu.quit_requested.connect(quit_game)
+	add_child(pause_menu)
+
+
+## ゲームを終了する。
+func quit_game() -> void:
+	get_tree().quit()
 
 
 func _unhandled_input(event: InputEvent) -> void:
@@ -108,9 +124,9 @@ func _add_wall(rect: Rect2) -> void:
 
 
 func _draw() -> void:
-	draw_rect(Rect2(Vector2.ZERO, get_viewport_rect().size), Color(0.11, 0.11, 0.12))
-	draw_rect(CONTAINER, Color.BLACK)
-	var wall_color := FRAME_COLOR
+	draw_rect(Rect2(Vector2.ZERO, get_viewport_rect().size), BACKGROUND_COLOR)
+	draw_rect(CONTAINER, CONTAINER_COLOR)
+	var wall_color := WALL_COLOR
 	draw_rect(Rect2(CONTAINER.position.x - WALL, CONTAINER.position.y, WALL, CONTAINER.size.y + WALL), wall_color)
 	draw_rect(Rect2(CONTAINER.end.x, CONTAINER.position.y, WALL, CONTAINER.size.y + WALL), wall_color)
 	draw_rect(Rect2(CONTAINER.position.x, CONTAINER.end.y, CONTAINER.size.x, WALL), wall_color)
@@ -148,8 +164,8 @@ func _draw_score() -> void:
 
 ## 見出し付きの丸い枠。
 func _draw_box(center: Vector2, title: String) -> void:
-	draw_circle(center, BOX_RADIUS, Color.BLACK)
-	draw_arc(center, BOX_RADIUS, 0.0, TAU, 48, FRAME_COLOR, 4.0, true)
+	draw_circle(center, BOX_RADIUS, BOX_COLOR)
+	draw_arc(center, BOX_RADIUS, 0.0, TAU, 48, BOX_RIM_COLOR, 4.0, true)
 	_draw_centered_text(title, center - Vector2(0, BOX_RADIUS + 18.0), 22)
 
 

@@ -86,3 +86,12 @@ func test_スコアの表示は合体で得た点数の合計():
 	_demo.field.score.add_merge(0)
 	_demo.field.score.add_merge(1)
 	assert_eq(_demo.score_text(), str(CatRules.merge_score(0) + CatRules.merge_score(1)))
+
+
+func test_escで開くポーズメニューがある():
+	assert_not_null(_demo.pause_menu)
+	assert_eq(_demo.pause_menu.get_parent(), _demo)
+
+
+func test_ポーズメニューで閉じるを選ぶとゲームを終了する():
+	assert_true(_demo.pause_menu.quit_requested.is_connected(_demo.quit_game))
