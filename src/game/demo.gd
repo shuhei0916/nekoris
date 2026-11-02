@@ -2,6 +2,7 @@
 extends Node2D
 
 const CatField = preload("res://src/game/cat_field.gd")
+const CatPainter = preload("res://src/blob/cat_painter.gd")
 const CatRules = preload("res://src/rules/cat_rules.gd")
 const SpawnQueue = preload("res://src/rules/spawn_queue.gd")
 
@@ -9,6 +10,15 @@ const CONTAINER := Rect2(100, 200, 400, 650)
 const WALL := 20.0
 ## 落とす前の猫を構える高さ。
 const DROP_Y := CONTAINER.position.y - 60.0
+## 次の猫を見せる丸い枠。
+const NEXT_BOX_CENTER := Vector2(530, 88)
+const NEXT_BOX_RADIUS := 46.0
+## 枠の中に描く次の猫の最大の半径（耳の分の余白を残す）。
+const NEXT_PREVIEW_MAX_RADIUS := 28.0
+## 表示だけの猫の輪郭の点の数。
+const PREVIEW_EDGE_POINTS := 12
+const TEXT_COLOR := Color(0.85, 0.85, 0.88)
+const FRAME_COLOR := Color(0.24, 0.24, 0.26)
 
 var field: Node2D
 var queue := SpawnQueue.new(RandomNumberGenerator.new())
@@ -52,6 +62,11 @@ func drop() -> void:
 	aim(_wanted_x)
 
 
+## 次の猫を枠の中に描くときの半径。
+static func next_preview_radius(tier: int) -> float:
+	return minf(CatRules.radius_of(tier), NEXT_PREVIEW_MAX_RADIUS)
+
+
 func _add_wall(rect: Rect2) -> void:
 	var wall := StaticBody2D.new()
 	wall.position = rect.get_center()
@@ -68,7 +83,35 @@ func _add_wall(rect: Rect2) -> void:
 func _draw() -> void:
 	draw_rect(Rect2(Vector2.ZERO, get_viewport_rect().size), Color(0.11, 0.11, 0.12))
 	draw_rect(CONTAINER, Color.BLACK)
-	var wall_color := Color(0.24, 0.24, 0.26)
+	var wall_color := FRAME_COLOR
 	draw_rect(Rect2(CONTAINER.position.x - WALL, CONTAINER.position.y, WALL, CONTAINER.size.y + WALL), wall_color)
 	draw_rect(Rect2(CONTAINER.end.x, CONTAINER.position.y, WALL, CONTAINER.size.y + WALL), wall_color)
 	draw_rect(Rect2(CONTAINER.position.x, CONTAINER.end.y, CONTAINER.size.x, WALL), wall_color)
+	_draw_held_cat()
+	_draw_next_cat()
+
+
+## 容器の上で構えている今の猫。
+func _draw_held_cat() -> void:
+	var tier := queue.current
+	_paint_cat(tier, Vector2(aim_x, DROP_Y), CatRules.radius_of(tier))
+
+
+## 右上の枠に入った次の猫。
+func _draw_next_cat() -> void:
+	draw_circle(NEXT_BOX_CENTER, NEXT_BOX_RADIUS, Color.BLACK)
+	draw_arc(NEXT_BOX_CENTER, NEXT_BOX_RADIUS, 0.0, TAU, 48, FRAME_COLOR, 4.0, true)
+	var font := ThemeDB.fallback_font
+	var font_size := 22
+	var text := "次"
+	var size := font.get_string_size(text, HORIZONTAL_ALIGNMENT_LEFT, -1, font_size)
+	var baseline := NEXT_BOX_CENTER + Vector2(-size.x / 2.0, -NEXT_BOX_RADIUS - 10.0)
+	draw_string(font, baseline, text, HORIZONTAL_ALIGNMENT_LEFT, -1, font_size, TEXT_COLOR)
+	var tier := queue.next
+	_paint_cat(tier, NEXT_BOX_CENTER + Vector2(0, 6), next_preview_radius(tier))
+
+
+func _paint_cat(tier: int, at: Vector2, radius: float) -> void:
+	CatPainter.paint_round(
+		self, at, radius, PREVIEW_EDGE_POINTS, CatRules.color_of(tier), str(CatRules.value_of(tier))
+	)

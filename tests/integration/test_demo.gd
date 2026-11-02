@@ -44,3 +44,12 @@ func test_落とすと次の猫が今の猫になる():
 	var next: int = _demo.queue.next
 	_demo.drop()
 	assert_eq(_demo.queue.current, next)
+
+
+func test_次の猫は枠に収まる大きさで描く():
+	for tier in CatRules.MAX_SPAWN_TIER + 1:
+		assert_lte(Demo.next_preview_radius(tier), Demo.NEXT_PREVIEW_MAX_RADIUS)
+
+
+func test_枠より小さい次の猫は本来の大きさで描く():
+	assert_eq(Demo.next_preview_radius(0), CatRules.radius_of(0))
