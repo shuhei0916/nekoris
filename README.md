@@ -56,6 +56,11 @@ GODOT=/path/to/Godot_console.exe ./run_tests.sh
 
 玉の摩擦と反発（`_ready` 内の `friction` / `bounce`）はどちらも 0 です。
 
+**張りを出したいとき**: 面積はすでにほぼ保たれているので、`pressure_strength` を上げても丸くなりません（400 以上では揺れが止まらなくなります）。
+猫が平たく見えるのは皮が伸びて周囲の長さが増えるためなので、`skin_stiffness` を上げます。
+ただし跳ね返りも増えるので、`internal_damping` も一緒に上げます（例: `skin_stiffness=8000 internal_damping=80`）。
+`skin_stiffness` を 15000 前後まで上げると、揺れが収まらなくなったり計算が発散したりします。
+
 ### 猫の大きさと出現（`src/rules/cat_rules.gd`）
 | 定数 | 値 | 効果 |
 |---|---|---|
