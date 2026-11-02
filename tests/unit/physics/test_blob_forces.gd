@@ -115,3 +115,19 @@ func test_玉の数は円周を玉の間隔で割った数():
 
 func test_小さすぎても玉は3つ以上():
 	assert_eq(BlobForces.bead_count_for(1.0, 16.0), 3)
+
+
+func test_全部の玉が同じ速さなら内部の粘りは働かない():
+	var velocities := PackedVector2Array([Vector2(30, 500), Vector2(30, 500), Vector2(30, 500)])
+	var forces := BlobForces.internal_damping_forces(velocities, 10.0)
+	for f in forces:
+		assert_almost_eq(f, Vector2.ZERO, Vector2(0.001, 0.001))
+
+
+func test_平均より速い玉ほど強いブレーキを受ける():
+	# 平均の速さは (0, 10)。玉ごとの平均とのずれに damping を掛けた分だけ逆向きに押す
+	var velocities := PackedVector2Array([Vector2(0, 40), Vector2(0, 0), Vector2(0, -10)])
+	var forces := BlobForces.internal_damping_forces(velocities, 2.0)
+	assert_almost_eq(forces[0], Vector2(0, -60), Vector2(0.001, 0.001))
+	assert_almost_eq(forces[1], Vector2(0, 20), Vector2(0.001, 0.001))
+	assert_almost_eq(forces[2], Vector2(0, 40), Vector2(0.001, 0.001))

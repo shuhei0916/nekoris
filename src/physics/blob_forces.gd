@@ -77,6 +77,21 @@ static func core_force(
 	return (ring_center - core_position) * stiffness + (ring_velocity - core_velocity) * damping
 
 
+## 輪の中の揺れを吸収する力。各玉の速さを輪の平均の速さに近づける。
+## 輪全体の動きには効かず、変形して揺れ戻す動きだけを弱める（合計は0）。
+static func internal_damping_forces(
+	velocities: PackedVector2Array, damping: float
+) -> PackedVector2Array:
+	var mean := Vector2.ZERO
+	for v in velocities:
+		mean += v
+	mean /= velocities.size()
+	var forces := PackedVector2Array()
+	for v in velocities:
+		forces.append((mean - v) * damping)
+	return forces
+
+
 ## 半径 radius の円周に、間隔 spacing で並べる玉の数。
 static func bead_count_for(radius: float, spacing: float) -> int:
 	return maxi(3, roundi(TAU * radius / spacing))
