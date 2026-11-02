@@ -30,3 +30,11 @@ static func _closest_to(points: PackedVector2Array, center: Vector2, direction: 
 			best_dot = dot
 			best = i
 	return best
+
+
+## 半径 radius の円周に count 個の点を等間隔で並べた輪郭（原点中心）。
+static func circle(radius: float, count: int) -> PackedVector2Array:
+	var points := PackedVector2Array()
+	for i in count:
+		points.append(Vector2.from_angle(TAU * i / count) * radius)
+	return points

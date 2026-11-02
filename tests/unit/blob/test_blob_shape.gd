@@ -29,3 +29,10 @@ func test_耳は左上と右上に最も近い玉に付く():
 func test_輪が回転しても耳は上を向いた玉に付く():
 	# 輪全体を90度回すと、元の玉 i は角度 30i+90 度の位置にある
 	assert_eq(BlobShape.ear_indices(_circle(12, 90.0), Vector2.ZERO), Vector2i(5, 7))
+
+
+func test_円の輪郭は指定した数の点が半径の距離に等間隔で並ぶ():
+	var points := BlobShape.circle(30.0, 8)
+	assert_eq(points.size(), 8)
+	for i in points.size():
+		assert_almost_eq(points[i], Vector2.from_angle(TAU * i / 8) * 30.0, Vector2(0.001, 0.001))
