@@ -21,10 +21,12 @@ var label := ""
 @export var area_per_mass := 300.0
 @export var skin_stiffness := 2000.0
 @export var skin_damping := 8.0
-@export var pressure_strength := 40.0
+@export var pressure_strength := 120.0
 @export var pressure_max := 30000.0
-@export var core_stiffness := 180.0
-@export var core_damping := 12.0
+## 変形の揺れを吸収する粘り。大きいほど着地でぽよんと跳ね返りにくい。
+@export var internal_damping := 40.0
+@export var core_stiffness := 1500.0
+@export var core_damping := 78.0
 @export var color := Color(1.0, 0.8, 0.55)
 ## 出現時の大きさの倍率。1未満なら grow_time かけて元の大きさまで膨らむ。
 @export var start_scale := 1.0
@@ -119,6 +121,7 @@ func _physics_process(delta: float) -> void:
 	var pressure := BlobForces.pressure_forces(
 		points, _target_area * _growth * _growth, pressure_strength, pressure_max
 	)
+	var internal := BlobForces.internal_damping_forces(velocities, internal_damping)
 	var core := BlobForces.core_force(
 		ring_center, ring_velocity, _core.global_position, _core.linear_velocity,
 		core_stiffness, core_damping
@@ -127,7 +130,7 @@ func _physics_process(delta: float) -> void:
 	# 重りを引いた反作用を輪全体で受け持つ
 	var core_reaction := -core / _beads.size()
 	for i in _beads.size():
-		_beads[i].apply_central_force((skin[i] + pressure[i]) * bead_mass + core_reaction)
+		_beads[i].apply_central_force((skin[i] + pressure[i] + internal[i]) * bead_mass + core_reaction)
 	queue_redraw()
 
 
