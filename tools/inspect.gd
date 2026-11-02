@@ -6,17 +6,16 @@
 ##   frames=900         何フレーム動かすか
 ##   every=0            0 より大きければ、このフレームごとにも途中の状態を出す
 ##   seed=1             猫の順番を決める乱数の種
-## 図の見方: 猫は段階の数字（0=「2」の猫, 1=「4」…, 10以上は a, b, …）、構えている猫は *、
-##          容器の壁は | 、床は = 。1文字が横10px・縦20px。
+## 出力: スコア・今と次の猫・構えているか、猫ごとの状態、
+##       容器からはみ出した玉の数（escaped）と、ほかの猫の体に入り込んだ玉の数（intruders）。
 extends SceneTree
 
 const Demo = preload("res://src/game/demo.gd")
 const CatRules = preload("res://src/rules/cat_rules.gd")
 const SpawnQueue = preload("res://src/rules/spawn_queue.gd")
 
-const CELL := Vector2(10, 20)
-const MAP_TOP := 70.0
-const TIER_CHARS := "0123456789abcdefghijklmnopqrstuvwxyz"
+## 玉の中心がこの距離 (px) を超えて容器の外に出たら、はみ出したとみなす。
+const ESCAPE_TOLERANCE := 1.0
 
 var _demo: Node2D
 var _drops: Array[float] = []
@@ -77,47 +76,30 @@ func _report() -> void:
 			CatRules.value_of(cat.tier), core.global_position.x, core.global_position.y,
 			core.linear_velocity.length(), cat.get_area_ratio(), cat.get_growth(),
 		])
-	_print_map()
+	_print_checks()
 
 
-## 容器のまわりを文字の図にする。
-func _print_map() -> void:
-	var left := Demo.CONTAINER.position.x - Demo.WALL
-	var right := Demo.CONTAINER.end.x + Demo.WALL
-	var bottom := Demo.CONTAINER.end.y + Demo.WALL
+## 容器からのはみ出しと、猫どうしの食い込みを数える。
+func _print_checks() -> void:
 	var cats: Array = _demo.field.get_cats()
-	var held_radius := CatRules.radius_of(_demo.queue.current)
-	var held_at := Vector2(_demo.aim_x, Demo.DROP_Y)
-	var y := MAP_TOP
-	while y < bottom:
-		var line := ""
-		var x := left
-		while x < right:
-			line += _char_at(Vector2(x, y) + CELL / 2.0, cats, held_at, held_radius)
-			x += CELL.x
-		print(line)
-		y += CELL.y
-
-
-func _char_at(p: Vector2, cats: Array, held_at: Vector2, held_radius: float) -> String:
+	var escaped := 0
+	var intruders := 0
 	for cat in cats:
-		if _is_inside(p, cat):
-			return TIER_CHARS[mini(cat.tier, TIER_CHARS.length() - 1)]
-	if _demo.is_holding() and p.distance_to(held_at) <= held_radius:
-		return "*"
-	if p.y >= Demo.CONTAINER.end.y:
-		return "=" if p.y < Demo.CONTAINER.end.y + Demo.WALL else " "
-	if p.y >= Demo.CONTAINER.position.y and (p.x < Demo.CONTAINER.position.x or p.x > Demo.CONTAINER.end.x):
-		return "|"
-	return "." if Demo.CONTAINER.has_point(p) else " "
+		for p in cat.get_outline():
+			if _is_escaped(p):
+				escaped += 1
+		for other in cats:
+			if other == cat:
+				continue
+			for p in other.get_outline():
+				if Geometry2D.is_point_in_polygon(p, cat.get_outline()):
+					intruders += 1
+	print("checks: escaped=%d intruders=%d" % [escaped, intruders])
 
 
-## 点 p が猫の体（玉の中心を結んだ多角形と、外周の玉）の中にあるか。
-func _is_inside(p: Vector2, cat: Node2D) -> bool:
-	var outline: PackedVector2Array = cat.get_outline()
-	if Geometry2D.is_point_in_polygon(p, outline):
-		return true
-	for bead in outline:
-		if p.distance_to(bead) <= cat.bead_radius:
-			return true
-	return false
+func _is_escaped(p: Vector2) -> bool:
+	return (
+		p.x < Demo.CONTAINER.position.x - ESCAPE_TOLERANCE
+		or p.x > Demo.CONTAINER.end.x + ESCAPE_TOLERANCE
+		or p.y > Demo.CONTAINER.end.y + ESCAPE_TOLERANCE
+	)
