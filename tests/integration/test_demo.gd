@@ -76,3 +76,13 @@ func test_待ち時間が過ぎると次の猫を構えて落とせる():
 	assert_true(_demo.is_holding())
 	_demo.drop()
 	assert_eq(_demo.field.get_cats().size(), 2)
+
+
+func test_はじめのスコアの表示は0():
+	assert_eq(_demo.score_text(), "0")
+
+
+func test_スコアの表示は合体で得た点数の合計():
+	_demo.field.score.add_merge(0)
+	_demo.field.score.add_merge(1)
+	assert_eq(_demo.score_text(), str(CatRules.merge_score(0) + CatRules.merge_score(1)))

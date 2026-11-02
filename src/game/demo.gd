@@ -12,9 +12,10 @@ const WALL := 20.0
 const DROP_Y := CONTAINER.position.y - 60.0
 ## 猫を落としてから次の猫を構えるまでの秒数。
 const DROP_COOLDOWN := 0.5
-## 次の猫を見せる丸い枠。
+## 右上で次の猫を見せる丸い枠と、左上でスコアを見せる丸い枠。
 const NEXT_BOX_CENTER := Vector2(530, 88)
-const NEXT_BOX_RADIUS := 46.0
+const SCORE_BOX_CENTER := Vector2(70, 88)
+const BOX_RADIUS := 46.0
 ## 枠の中に描く次の猫の最大の半径（耳の分の余白を残す）。
 const NEXT_PREVIEW_MAX_RADIUS := 28.0
 ## 表示だけの猫の輪郭の点の数。
@@ -42,6 +43,7 @@ func _ready() -> void:
 	_add_wall(Rect2(left - WALL, CONTAINER.position.y, WALL, height + WALL))
 	_add_wall(Rect2(right, CONTAINER.position.y, WALL, height + WALL))
 	_add_wall(Rect2(left, bottom, CONTAINER.size.x, WALL))
+	field.merged.connect(func(_tier: int, _at: Vector2) -> void: queue_redraw())
 
 
 func _unhandled_input(event: InputEvent) -> void:
@@ -82,6 +84,11 @@ func drop() -> void:
 	aim(_wanted_x)
 
 
+## スコアの枠に出す文字。
+func score_text() -> String:
+	return str(field.score.total)
+
+
 ## 次の猫を枠の中に描くときの半径。
 static func next_preview_radius(tier: int) -> float:
 	return minf(CatRules.radius_of(tier), NEXT_PREVIEW_MAX_RADIUS)
@@ -109,6 +116,7 @@ func _draw() -> void:
 	draw_rect(Rect2(CONTAINER.position.x, CONTAINER.end.y, CONTAINER.size.x, WALL), wall_color)
 	_draw_held_cat()
 	_draw_next_cat()
+	_draw_score()
 
 
 ## 容器の上で構えている今の猫。
@@ -121,14 +129,7 @@ func _draw_held_cat() -> void:
 
 ## 右上の枠に入った次の猫。
 func _draw_next_cat() -> void:
-	draw_circle(NEXT_BOX_CENTER, NEXT_BOX_RADIUS, Color.BLACK)
-	draw_arc(NEXT_BOX_CENTER, NEXT_BOX_RADIUS, 0.0, TAU, 48, FRAME_COLOR, 4.0, true)
-	var font := ThemeDB.fallback_font
-	var font_size := 22
-	var text := "次"
-	var size := font.get_string_size(text, HORIZONTAL_ALIGNMENT_LEFT, -1, font_size)
-	var baseline := NEXT_BOX_CENTER + Vector2(-size.x / 2.0, -NEXT_BOX_RADIUS - 10.0)
-	draw_string(font, baseline, text, HORIZONTAL_ALIGNMENT_LEFT, -1, font_size, TEXT_COLOR)
+	_draw_box(NEXT_BOX_CENTER, "次")
 	var tier := queue.next
 	_paint_cat(tier, NEXT_BOX_CENTER + Vector2(0, 6), next_preview_radius(tier))
 
@@ -137,3 +138,24 @@ func _paint_cat(tier: int, at: Vector2, radius: float) -> void:
 	CatPainter.paint_round(
 		self, at, radius, PREVIEW_EDGE_POINTS, CatRules.color_of(tier), str(CatRules.value_of(tier))
 	)
+
+
+## 左上の枠に入ったスコア。
+func _draw_score() -> void:
+	_draw_box(SCORE_BOX_CENTER, "スコア")
+	_draw_centered_text(score_text(), SCORE_BOX_CENTER, 28)
+
+
+## 見出し付きの丸い枠。
+func _draw_box(center: Vector2, title: String) -> void:
+	draw_circle(center, BOX_RADIUS, Color.BLACK)
+	draw_arc(center, BOX_RADIUS, 0.0, TAU, 48, FRAME_COLOR, 4.0, true)
+	_draw_centered_text(title, center - Vector2(0, BOX_RADIUS + 18.0), 22)
+
+
+## center を中心に文字を描く。
+func _draw_centered_text(text: String, center: Vector2, font_size: int) -> void:
+	var font := ThemeDB.fallback_font
+	var size := font.get_string_size(text, HORIZONTAL_ALIGNMENT_LEFT, -1, font_size)
+	var baseline := center + Vector2(-size.x / 2.0, (font.get_ascent(font_size) - font.get_descent(font_size)) / 2.0)
+	draw_string(font, baseline, text, HORIZONTAL_ALIGNMENT_LEFT, -1, font_size, TEXT_COLOR)
