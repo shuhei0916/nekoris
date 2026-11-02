@@ -44,12 +44,16 @@ func _is_clear(at: Vector2, blob_radius: float) -> bool:
 
 func _report() -> void:
 	var min_ratio := INF
+	var min_tier := -1
 	var max_ratio := 0.0
 	var escaped := 0
 	var intruders := 0
 	for blob in _blobs:
 		var r: float = blob.get_area_ratio()
-		min_ratio = minf(min_ratio, r)
+		# 合体直後で膨らんでいる途中の猫は、面積が小さくて当然なので除く
+		if r < min_ratio and blob.get_growth() >= 1.0:
+			min_ratio = r
+			min_tier = blob.tier
 		max_ratio = maxf(max_ratio, r)
 		for p in blob.get_outline():
 			if p.x < Demo.CONTAINER.position.x - 1 or p.x > Demo.CONTAINER.end.x + 1 or p.y > Demo.CONTAINER.end.y + 1:
@@ -64,4 +68,4 @@ func _report() -> void:
 		tiers.append(blob.tier)
 	tiers.sort()
 	print("score=%d tiers=%s" % [_demo.field.score.total, tiers])
-	print("frame=%d blobs=%d area_ratio=[%.2f, %.2f] escaped_beads=%d intruders=%d" % [_frame, _blobs.size(), min_ratio, max_ratio, escaped, intruders])
+	print("frame=%d blobs=%d area_ratio=[%.2f(tier%d), %.2f] escaped_beads=%d intruders=%d" % [_frame, _blobs.size(), min_ratio, min_tier, max_ratio, escaped, intruders])
