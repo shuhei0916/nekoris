@@ -6,8 +6,8 @@ extends SceneTree
 const Demo = preload("res://src/game/demo.gd")
 
 const DROPS := [130.0, 210.0, 300.0, 390.0, 470.0, 170.0, 350.0]
-const DROP_INTERVAL := 40
-const CAPTURE_FRAME := 600
+const DROP_INTERVAL := 70
+const CAPTURE_FRAME := 900
 
 var _demo: Node2D
 var _frame := 0

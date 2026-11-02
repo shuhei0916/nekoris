@@ -53,3 +53,26 @@ func test_次の猫は枠に収まる大きさで描く():
 
 func test_枠より小さい次の猫は本来の大きさで描く():
 	assert_eq(Demo.next_preview_radius(0), CatRules.radius_of(0))
+
+
+func test_はじめは今の猫を構えている():
+	assert_true(_demo.is_holding())
+
+
+func test_落とした直後は次の猫を構えていない():
+	_demo.drop()
+	assert_false(_demo.is_holding())
+
+
+func test_構えていない間はクリックしても落ちない():
+	_demo.drop()
+	_demo.drop()
+	assert_eq(_demo.field.get_cats().size(), 1)
+
+
+func test_待ち時間が過ぎると次の猫を構えて落とせる():
+	_demo.drop()
+	_demo._process(Demo.DROP_COOLDOWN)
+	assert_true(_demo.is_holding())
+	_demo.drop()
+	assert_eq(_demo.field.get_cats().size(), 2)

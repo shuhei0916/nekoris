@@ -10,6 +10,8 @@ const CONTAINER := Rect2(100, 200, 400, 650)
 const WALL := 20.0
 ## 落とす前の猫を構える高さ。
 const DROP_Y := CONTAINER.position.y - 60.0
+## 猫を落としてから次の猫を構えるまでの秒数。
+const DROP_COOLDOWN := 0.5
 ## 次の猫を見せる丸い枠。
 const NEXT_BOX_CENTER := Vector2(530, 88)
 const NEXT_BOX_RADIUS := 46.0
@@ -26,6 +28,8 @@ var queue := SpawnQueue.new(RandomNumberGenerator.new())
 var aim_x := CONTAINER.get_center().x
 ## 最後に狙った横の位置（壁で制限する前）。猫が入れ替わったら狙い直すのに使う。
 var _wanted_x := aim_x
+## 次の猫を構えるまでの残り秒数。
+var _cooldown := 0.0
 
 
 func _ready() -> void:
@@ -48,6 +52,18 @@ func _unhandled_input(event: InputEvent) -> void:
 		drop()
 
 
+func _process(delta: float) -> void:
+	if _cooldown > 0.0:
+		_cooldown = maxf(_cooldown - delta, 0.0)
+		if is_holding():
+			queue_redraw()
+
+
+## 今の猫を構えていて、落とせる状態か。
+func is_holding() -> bool:
+	return _cooldown <= 0.0
+
+
 ## 横の位置 x を狙う。今の猫が容器の壁からはみ出さない範囲に限る。
 func aim(x: float) -> void:
 	_wanted_x = x
@@ -57,8 +73,12 @@ func aim(x: float) -> void:
 
 
 ## 今の猫を狙った位置から落とし、次の猫を構える。
+## 構えていない間は何もしない。
 func drop() -> void:
+	if not is_holding():
+		return
 	field.spawn_cat(queue.take(), Vector2(aim_x, DROP_Y))
+	_cooldown = DROP_COOLDOWN
 	aim(_wanted_x)
 
 
@@ -93,6 +113,8 @@ func _draw() -> void:
 
 ## 容器の上で構えている今の猫。
 func _draw_held_cat() -> void:
+	if not is_holding():
+		return
 	var tier := queue.current
 	_paint_cat(tier, Vector2(aim_x, DROP_Y), CatRules.radius_of(tier))
 
