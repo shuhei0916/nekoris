@@ -1,5 +1,6 @@
 ## デモに猫を何匹か落とし、落ち着いたところの画面を PNG に保存する確認用スクリプト。
-## 画面を描くので --headless は付けずに実行する。
+## 画面を描くので --headless は付けずに実行する。ウィンドウが開くので、普段の動作確認は
+## ヘッドレスで動く tools/inspect.gd を使い、見た目そのものを確かめたいときだけ使う。
 ## 使い方: godot -s tools/screenshot.gd -- <保存先.png>
 extends SceneTree
 
