@@ -10,6 +10,11 @@
 - [ ] 猫の張りを出す。`src/blob/blob.gd` で `skin_stiffness=8000`・`internal_damping=80` を試す（README「張りを出したいとき」を参照）
   - 試すだけなら `tools/drop_test.gd -- skin_stiffness=8000 internal_damping=80`
   - 決めたら `tests/integration/test_landing_feel.gd` が通るか確かめる
+- [ ] 猫どうしの重なりが残るようなら、ほかの猫の輪の内側に入り込んだ玉を外へ押し出す力を入れる
+  - 猫の体は中が空っぽの輪なので、玉が一度内側に入ると押し出す力が働かない
+  - 合体で生まれた猫がほかの猫を取り込む問題は、出す位置と大きさを変えて対策済み（`src/physics/merge_placement.gd`）
+  - 残っているのは、積み重なった重みで玉が1個ほど内側に入り込み、しばらく抜けない軽い重なり
+  - 毎フレーム近くの猫どうしで調べることになるので、`test_landing_feel.gd` の質感や計算の発散に影響しないか確かめる
 - [ ] `tools/drop_test.gd` などで値を上げすぎると計算が発散して固まる（例: `skin_stiffness=15000 skin_damping=30`）。発散を検知して打ち切る仕組みを入れるか検討する
 
 ## ゲームとして足りないもの

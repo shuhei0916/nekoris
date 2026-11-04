@@ -91,3 +91,30 @@ func test_同じ段階の猫も触れてすぐには合体しない():
 	_spawn_side_by_side(0, 0)
 	await wait_physics_frames(3)
 	assert_eq(_field.get_cats().size(), 2)
+
+
+
+## outer の輪の内側に入り込んでいる inner の玉の数。
+func _beads_inside(inner: Node2D, outer: Node2D) -> int:
+	var count := 0
+	for p in inner.get_outline():
+		if Geometry2D.is_point_in_polygon(p, outer.get_outline()):
+			count += 1
+	return count
+
+
+func test_合体した猫は2匹の重心にいたほかの猫を取り込まない():
+	# 2匹が小さい猫を抱え込むように触れていると、2匹の重心が小さい猫の上に来る
+	_add_wall(Rect2(0, 400, 600, 20))
+	var radius := CatRules.radius_of(4)
+	var left: Node2D = _field.spawn_cat(4, Vector2(300 - radius - 10, 400 - radius))
+	var right: Node2D = _field.spawn_cat(4, Vector2(300 + radius + 10, 400 - radius))
+	var small: Node2D = _field.spawn_cat(0, Vector2(300, 400 - radius))
+	await wait_physics_frames(2)
+	var merged: Node2D = _field.merge(left, right)
+	await wait_seconds(1.0)
+	assert_eq(_beads_inside(small, merged), 0, "小さい猫の玉が合体した猫の内側に入っていない")
+	assert_false(
+		Geometry2D.is_point_in_polygon(small.get_core().global_position, merged.get_outline()),
+		"小さい猫の中心が合体した猫の内側に入っていない"
+	)

@@ -73,7 +73,7 @@ GODOT=/path/to/Godot_console.exe ./run_tests.sh
 |---|---|---|
 | `MERGE_DELAY` | 0.5 | 同じ段階の猫がこの秒数だけ触れ続けたら合体する。途中で離れたら数え直す |
 | `CONTACT_MARGIN` | 2 | 玉どうしがこの距離 (px) だけ離れていても触れているとみなす余裕 |
-| `MERGE_START_SCALE` | 0.5 | 合体した猫を出すときの大きさの倍率（ここから `grow_time` かけて膨らむ） |
+| `MERGE_START_SCALE` | 0.5 | 合体した猫を出すときの大きさの倍率（ここから `grow_time` かけて膨らむ）。出す位置のそばにほかの猫がいれば、触れない大きさまで縮める（下限は `src/physics/merge_placement.gd` の `MIN_START_SCALE` = 0.1） |
 
 ### 操作と容器（`src/game/demo.gd`）
 | 定数・設定 | 値 | 効果 |

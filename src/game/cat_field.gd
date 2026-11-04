@@ -5,6 +5,7 @@ const Blob = preload("res://src/blob/blob.gd")
 const BlobContact = preload("res://src/physics/blob_contact.gd")
 const CatRules = preload("res://src/rules/cat_rules.gd")
 const ContactTimer = preload("res://src/physics/contact_timer.gd")
+const MergePlacement = preload("res://src/physics/merge_placement.gd")
 const ScoreBoard = preload("res://src/rules/score_board.gd")
 
 ## 玉どうしがこの距離だけ離れていても「触れている」とみなす余裕。
@@ -44,7 +45,7 @@ func _physics_process(delta: float) -> void:
 	# 1フレームに合体は1組だけ
 	for key in pairs:
 		if _contacts.elapsed(key) >= MERGE_DELAY:
-			_merge(pairs[key][0], pairs[key][1])
+			merge(pairs[key][0], pairs[key][1])
 			return
 
 
@@ -63,17 +64,40 @@ func _find_mergeable_touching_pairs() -> Dictionary:
 	return pairs
 
 
-func _merge(a: Node2D, b: Node2D) -> void:
+## 2匹を合体させ、1つ上の段階の猫を出す。
+## 2匹の重心に出すが、そこがほかの猫に近すぎるときは2匹の中心を結ぶ線分の上で空いた位置にずらし、
+## 空きに収まる大きさで出す。中が空っぽの輪がほかの猫を取り込まないようにするため。
+func merge(a: Node2D, b: Node2D) -> Node2D:
 	var mass_a: float = a.get_total_mass()
 	var mass_b: float = b.get_total_mass()
-	var at: Vector2 = (a.get_core().global_position * mass_a + b.get_core().global_position * mass_b) / (mass_a + mass_b)
+	var from: Vector2 = a.get_core().global_position
+	var to: Vector2 = b.get_core().global_position
+	var center := (from * mass_a + to * mass_b) / (mass_a + mass_b)
 	var velocity: Vector2 = (a.get_core().linear_velocity * mass_a + b.get_core().linear_velocity * mass_b) / (mass_a + mass_b)
+	var bead_radius: float = a.bead_radius
 	_remove(a)
 	_remove(b)
 	score.add_merge(a.tier)
-	var cat := spawn_cat(CatRules.merged_tier(a.tier), at, MERGE_START_SCALE)
+	var tier := CatRules.merged_tier(a.tier)
+	var ring_radius := CatRules.radius_of(tier) - bead_radius
+	var obstacles := _all_bead_positions()
+	var needed := ring_radius * MERGE_START_SCALE + 2.0 * bead_radius
+	var at := MergePlacement.spot(from, to, center, obstacles, needed)
+	var start_scale := MergePlacement.start_scale(
+		MergePlacement.clearance(at, obstacles), ring_radius, bead_radius, MERGE_START_SCALE
+	)
+	var cat := spawn_cat(tier, at, start_scale)
 	cat.launch(velocity)
 	merged.emit(cat.tier, at)
+	return cat
+
+
+## 今いる猫すべての玉の位置。
+func _all_bead_positions() -> PackedVector2Array:
+	var points := PackedVector2Array()
+	for cat in _cats:
+		points.append_array(cat.get_outline())
+	return points
 
 
 func _remove(cat: Node2D) -> void:
