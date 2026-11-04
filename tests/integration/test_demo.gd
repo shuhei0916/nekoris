@@ -107,3 +107,17 @@ func test_容器の床は画面の下の端に近い():
 	var floor_bottom := Demo.CONTAINER.end.y + Demo.WALL
 	assert_lte(floor_bottom, float(height), "床が画面に収まる")
 	assert_gte(floor_bottom, height - 80.0, "床の下に大きな余白を残さない")
+
+
+## 段階 tier の猫の直径が、容器の幅に占める割合。
+func _width_ratio(tier: int) -> float:
+	return CatRules.radius_of(tier) * 2.0 / Demo.CONTAINER.size.x
+
+
+func test_いちばん小さい猫は容器の幅の1割ほど():
+	assert_between(_width_ratio(0), 0.09, 0.11)
+
+
+func test_2048の猫は容器の幅の4割強まで大きくなる():
+	# 段階が上がるほど大きくなる手応えを出す
+	assert_between(_width_ratio(10), 0.41, 0.47)

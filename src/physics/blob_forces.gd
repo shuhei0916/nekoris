@@ -1,6 +1,9 @@
 ## ソフトボディ（数珠状の剛体の輪）に加える力を計算する純粋関数群。
 extends RefCounted
 
+## 輪の玉の数の下限。少ないと輪が角ばり、上に積まれたときに潰れやすい。
+const MIN_BEADS := 6
+
 
 ## 多角形の面積（頂点の並び順によらず正の値）。
 static func polygon_area(points: PackedVector2Array) -> float:
@@ -94,4 +97,4 @@ static func internal_damping_forces(
 
 ## 半径 radius の円周に、間隔 spacing で並べる玉の数。
 static func bead_count_for(radius: float, spacing: float) -> int:
-	return maxi(3, roundi(TAU * radius / spacing))
+	return maxi(MIN_BEADS, roundi(TAU * radius / spacing))

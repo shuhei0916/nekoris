@@ -1,9 +1,9 @@
 ## 猫の段階（tier）に関するルール。tier 0 が数字 2 の猫。
 extends RefCounted
 
-const BASE_RADIUS := 24.0
+const BASE_RADIUS := 20.0
 ## 段階が1つ上がるごとの半径の倍率。
-const GROWTH := 1.12
+const GROWTH := 1.16
 ## 発射される猫の最大の段階（数字 16 まで）。
 const MAX_SPAWN_TIER := 3
 ## 黒い背景で見分けやすい鮮やかな色。段階ごとに順に使い、一巡したら繰り返す。

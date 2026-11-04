@@ -51,7 +51,7 @@ GODOT=/path/to/Godot_console.exe ./run_tests.sh
 | `core_damping` ★ | 78 | 重りの揺れのブレーキ。2√(core_stiffness) 付近（今は約 77）で揺れ戻しなしで止まる |
 | `area_per_mass` ★ | 300 | 質量の決め方（面積 ÷ この値）。大きいほど軽い。小さい猫は玉の質量が大半なので効きにくい |
 | `bead_mass` ★ | 1 | 外周の玉1個の質量 |
-| `bead_radius` ★ / `bead_spacing` ★ | 10 / 14 | 外周の玉の大きさと間隔。間隔を広げると玉が減って形が粗くなるが軽くなる |
+| `bead_radius` ★ / `bead_spacing` ★ | 10 / 14 | 外周の玉の大きさと間隔。間隔を広げると玉が減って形が粗くなるが軽くなる。玉の数は最低 6 個（`src/physics/blob_forces.gd` の `MIN_BEADS`）で、少ないと積まれたときに潰れやすい |
 | `grow_time` | 0.25 | 合体した猫が小さい状態から元の大きさまで膨らむ秒数 |
 
 玉の摩擦と反発（`_ready` 内の `friction` / `bounce`）はどちらも 0 です。
@@ -64,8 +64,8 @@ GODOT=/path/to/Godot_console.exe ./run_tests.sh
 ### 猫の大きさと出現（`src/rules/cat_rules.gd`）
 | 定数 | 値 | 効果 |
 |---|---|---|
-| `BASE_RADIUS` | 24 | いちばん小さい猫（2）の半径 |
-| `GROWTH` | 1.12 | 段階が1つ上がるごとの半径の倍率 |
+| `BASE_RADIUS` | 20 | いちばん小さい猫（2）の半径。容器の幅の約 1 割 |
+| `GROWTH` | 1.16 | 段階が1つ上がるごとの半径の倍率（面積は約 1.35 倍）。2048 の猫が容器の幅の 4 割強になる |
 | `MAX_SPAWN_TIER` | 3 | 落とす猫の最大の段階（3 = 数字 16 まで） |
 
 ### 合体（`src/game/cat_field.gd`）

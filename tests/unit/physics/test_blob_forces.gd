@@ -113,8 +113,10 @@ func test_玉の数は円周を玉の間隔で割った数():
 	assert_eq(BlobForces.bead_count_for(40.0, 16.0), 16)
 
 
-func test_小さすぎても玉は3つ以上():
-	assert_eq(BlobForces.bead_count_for(1.0, 16.0), 3)
+func test_小さすぎても玉は6つ以上():
+	# 玉が少ないと輪が角ばり、上に積まれたときに潰れやすい
+	assert_eq(BlobForces.bead_count_for(1.0, 16.0), BlobForces.MIN_BEADS)
+	assert_eq(BlobForces.MIN_BEADS, 6)
 
 
 func test_全部の玉が同じ速さなら内部の粘りは働かない():
