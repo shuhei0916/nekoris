@@ -95,3 +95,15 @@ func test_escで開くポーズメニューがある():
 
 func test_ポーズメニューで閉じるを選ぶとゲームを終了する():
 	assert_true(_demo.pause_menu.quit_requested.is_connected(_demo.quit_game))
+
+
+func test_容器は正方形に近い形にする():
+	# 縦長だと猫が下に固まり、容器に対して猫が小さく見える
+	assert_lte(Demo.CONTAINER.size.y / Demo.CONTAINER.size.x, 1.2)
+
+
+func test_容器の床は画面の下の端に近い():
+	var height: int = ProjectSettings.get_setting("display/window/size/viewport_height")
+	var floor_bottom := Demo.CONTAINER.end.y + Demo.WALL
+	assert_lte(floor_bottom, float(height), "床が画面に収まる")
+	assert_gte(floor_bottom, height - 80.0, "床の下に大きな余白を残さない")

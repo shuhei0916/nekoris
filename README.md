@@ -80,5 +80,5 @@ GODOT=/path/to/Godot_console.exe ./run_tests.sh
 |---|---|---|
 | `DROP_COOLDOWN` | 0.5 | 猫を落としてから次の猫を構えるまでの秒数 |
 | `DROP_Y` | 容器の上端 − 60 | 構えた猫を落とす高さ |
-| `CONTAINER` | (100, 200, 400×650) | 容器の位置と大きさ |
+| `CONTAINER` | (100, 200, 400×440) | 容器の位置と大きさ。縦長だと猫が下に固まって小さく見えるので、正方形に近くしている（画面の高さ `project.godot` の `viewport_height` = 720 も合わせて変える） |
 | 壁の `friction` | 0.1 | 容器の壁と床の摩擦 |

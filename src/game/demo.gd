@@ -7,7 +7,7 @@ const CatRules = preload("res://src/rules/cat_rules.gd")
 const PauseMenu = preload("res://src/ui/pause_menu.gd")
 const SpawnQueue = preload("res://src/rules/spawn_queue.gd")
 
-const CONTAINER := Rect2(100, 200, 400, 650)
+const CONTAINER := Rect2(100, 200, 400, 440)
 const WALL := 20.0
 ## 落とす前の猫を構える高さ。
 const DROP_Y := CONTAINER.position.y - 60.0
